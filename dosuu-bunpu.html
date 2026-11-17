@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>度数分布・代表値（相対度数・平均値・中央値・最頻値）｜江原予備校 GAMBA</title>
+<link href="https://fonts.googleapis.com/css2?family=BIZ+UDGothic:wght@400;700&display=swap" rel="stylesheet">
+<style>
+:root{--main:#1f5fa8;--soft:#eaf2fb;--ok:#1b8a4b;--ng:#c0392b;--acc:#e8870e;--line:#c9d6e6}
+*{box-sizing:border-box}
+body{margin:0;font-family:"BIZ UDGothic","BIZ UDPGothic","Hiragino Sans","Meiryo",sans-serif;background:#f6f8fb;color:#222;line-height:1.8;font-size:17px}
+header{background:var(--main);color:#fff;padding:18px 16px;text-align:center}
+header small{display:block;opacity:.85;font-size:13px}
+header h1{margin:4px 0 0;font-size:22px}
+nav{position:sticky;top:0;z-index:5;background:#fff;border-bottom:2px solid var(--line);display:flex;gap:6px;overflow-x:auto;padding:8px}
+nav button{flex:0 0 auto;border:1px solid var(--line);background:#fff;border-radius:20px;padding:6px 14px;font:inherit;font-size:14px;cursor:pointer;color:var(--main)}
+nav button.on{background:var(--main);color:#fff;border-color:var(--main)}
+nav button.done::after{content:" ✓";color:#7fe0a3}
+main{max-width:860px;margin:0 auto;padding:14px}
+section{display:none}section.on{display:block}
+h2{border-left:8px solid var(--main);padding-left:10px;font-size:21px;margin:18px 0 8px}
+h3{font-size:18px;margin:22px 0 6px;color:var(--main)}
+.card{background:#fff;border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin:12px 0}
+.point{background:var(--soft);border-left:6px solid var(--main);border-radius:8px;padding:10px 14px;margin:12px 0}
+.point b.t{color:var(--main)}
+.tag{display:inline-block;background:var(--acc);color:#fff;border-radius:6px;padding:0 10px;font-size:14px;margin-right:6px}
+.tag.ex{background:var(--main)}.tag.mini{background:#7b4fb8}.tag.test{background:var(--ng)}
+table{border-collapse:collapse;margin:8px 0;font-size:16px}
+th,td{border:1px solid #8aa;padding:4px 10px;text-align:center;min-width:54px}
+th{background:var(--soft)}
+td.hl{background:#fff3cd;font-weight:bold}
+td.new{animation:pop .5s}
+@keyframes pop{from{background:#ffd27a;transform:scale(1.2)}to{background:#fff;transform:scale(1)}}
+button.b{background:var(--main);color:#fff;border:0;border-radius:8px;padding:8px 16px;font:inherit;font-size:15px;cursor:pointer;margin:4px 4px 4px 0}
+button.b.sub{background:#fff;color:var(--main);border:1px solid var(--main)}
+button.b:disabled{opacity:.4;cursor:default}
+input.ans{font:inherit;width:90px;border:2px solid #9ab;border-radius:6px;padding:3px 6px;text-align:center}
+input.ans.ok{border-color:var(--ok);background:#e9f8ef}input.ans.ng{border-color:var(--ng);background:#fdeceb}
+.fb{font-weight:bold;margin-left:6px}.fb.ok{color:var(--ok)}.fb.ng{color:var(--ng)}
+.hint,.sol{display:none;background:#fffbe8;border:1px dashed #d9b84a;border-radius:8px;padding:8px 12px;margin:6px 0}
+.sol{background:#f0fbf4;border-color:#6bbf8c}
+.hint.show,.sol.show{display:block}
+.chips{display:flex;flex-wrap:wrap;gap:6px;margin:8px 0}
+.chip{min-width:44px;text-align:center;border:2px solid var(--main);border-radius:8px;padding:2px 8px;background:#fff;transition:all .5s}
+.chip.mid{background:var(--acc);color:#fff;border-color:var(--acc);transform:translateY(-6px)}
+.chip.mode{background:var(--ok);color:#fff;border-color:var(--ok)}
+.bars{display:flex;align-items:flex-end;gap:8px;height:150px;margin:8px 0;border-bottom:2px solid #666;padding:0 6px}
+.bar{flex:1;background:#8fb4e3;text-align:center;font-size:13px;position:relative;transition:height .6s;min-width:30px}
+.bar.top{background:var(--ok)}
+.bar span{position:absolute;top:-22px;left:0;right:0}
+.lab{display:flex;gap:8px;padding:0 6px;font-size:13px;text-align:center}.lab div{flex:1;min-width:30px}
+.score{position:sticky;bottom:0;background:#fff;border-top:2px solid var(--line);padding:8px;text-align:center;font-weight:bold}
+.q{padding:8px 0;border-bottom:1px dotted #bbb}.q:last-child{border:0}
+.frac{display:inline-block;vertical-align:middle;text-align:center;line-height:1.3}
+.frac i{display:block;font-style:normal;padding:0 4px}.frac i:first-child{border-bottom:1.5px solid #222}
+.next{text-align:center;margin:24px 0}
+</style>
+</head>
+<body>
+<header><small>江原予備校 GAMBA　高校入試対策</small><h1>度数分布・代表値<br>相対度数／平均値／中央値／最頻値</h1></header>
+<nav id="nav"></nav>
+<main id="main"></main>
+
+<script>
+/* ---------- ユーティリティ ---------- */
+const $=(s,r=document)=>r.querySelector(s);
+const norm=s=>s.replace(/[０-９．－]/g,c=>({'．':'.','－':'-'}[c]||String.fromCharCode(c.charCodeAt(0)-65248))).replace(/[\s,，、]/g,'').replace(/[%％]$/,'');
+const tbl=(head,rows,opt={})=>`<table><tr>${head.map(h=>`<th>${h}</th>`).join('')}</tr>${rows.map(r=>`<tr>${r.map(c=>`<td>${c}</td>`).join('')}</tr>`).join('')}</table>`;
+const hrow=(label,vals)=>`<table><tr><th>${label[0]}</th>${vals[0].map(v=>`<td>${v}</td>`).join('')}</tr><tr><th>${label[1]}</th>${vals[1].map(v=>`<td>${v}</td>`).join('')}</tr></table>`;
+const frac=(a,b)=>`<span class="frac"><i>${a}</i><i>${b}</i></span>`;
+let uid=0;const done={};
+
+/* 問題: {q, ans:[{pre,unit,v}], hint, sol} */
+function prob(p,tag){
+  const id='p'+(++uid);
+  const inputs=p.ans.map((a,i)=>`${a.pre||''}<input class="ans" id="${id}_${i}" inputmode="decimal" autocomplete="off"> ${a.unit||''}`).join('　');
+  return `<div class="q" id="${id}">${tag?`<span class="tag ${tag[1]||''}">${tag[0]}</span>`:''}${p.q}
+   <div style="margin-top:6px">${inputs}
+   <button class="b" onclick="chk('${id}')">答え合わせ</button>
+   ${p.hint?`<button class="b sub" onclick="tg('${id}','h')">ヒント</button>`:''}
+   <button class="b sub" onclick="tg('${id}','s')">解説</button><span class="fb" id="${id}_fb"></span></div>
+   ${p.hint?`<div class="hint" id="${id}_h">💡 ${p.hint}</div>`:''}
+   <div class="sol" id="${id}_s">${p.sol}</div></div>`;
+}
+const store={};
+function reg(p){const h=prob(p.p,p.tag);const m=h.match(/id="(p\d+)"/)[1];store[m]=p.p;return h}
+function tg(id,k){$('#'+id+'_'+k).classList.toggle('show')}
+function chk(id){
+  const p=store[id];let all=true;
+  p.ans.forEach((a,i)=>{
+    const el=$('#'+id+'_'+i);const v=parseFloat(norm(el.value));
+    const ok=!isNaN(v)&&Math.abs(v-a.v)<1e-6;
+    el.classList.toggle('ok',ok);el.classList.toggle('ng',!ok);if(!ok)all=false;
+  });
+  const fb=$('#'+id+'_fb');
+  fb.className='fb '+(all?'ok':'ng');fb.textContent=all?'⭕ 正解です！':'❌ もう一度。ヒントも見てみましょう';
+  p.ok=all;if(typeof upd==='function')upd();
+}
+
+/* ---------- 各セクション ---------- */
+const S=[];
+
+/* 1 相対度数 */
+S.push({name:'① 相対度数',html:()=>`
+<h2>1. 相対度数</h2>
+<div class="point"><b class="t">ポイント</b><br>各階級の度数が、データ全体に対してどれくらいの割合かを表したものを <b>相対度数</b> といいます。<br>
+<b>相対度数 ＝ ${frac('その階級の度数','度数の合計')}</b>　（合計はいつも <b>1</b> になります）</div>
+
+<div class="card"><span class="tag ex">例題</span>40人の通学時間の度数分布表です。ボタンを押して、相対度数を1階級ずつ求めましょう。
+<div id="relDemo"></div>
+<button class="b" id="relBtn" onclick="relStep()">次の階級を計算する</button>
+<button class="b sub" onclick="relReset()">最初から</button></div>
+
+<div class="card">${reg({tag:['ミニテスト','mini'],p:{q:'ある階級の度数が12人、度数の合計が40人のとき、その階級の相対度数はいくつですか。',ans:[{v:0.3}],hint:'12 ÷ 40 を計算します。',sol:'12 ÷ 40 ＝ <b>0.3</b>'}})}</div>
+
+<h3>練習</h3>
+<div class="card">${reg({tag:['練習(1)'],p:{q:`次の表は、Aクラス（40人）の通学時間の相対度数分布表です。<b>x、y</b>の値を求めましょう。
+${tbl(['階級','度数(人)','相対度数'],[['0分以上20分未満','x','0.125'],['20 ～ 40','y','0.4'],['40 ～ 60','11','0.275'],['60 ～ 80','6','0.15'],['80 ～ 100','2','0.05'],['計','40','1.000']])}`,
+ans:[{pre:'x＝',v:5},{pre:'y＝',v:16}],hint:'度数 ＝ 合計 × 相対度数 です。',sol:'x ＝ 40 × 0.125 ＝ <b>5</b><br>y ＝ 40 × 0.4 ＝ <b>16</b>'}})}</div>
+
+<div class="card">${reg({tag:['練習(2)'],p:{q:`下の度数分布表は、あるクラスの生徒40人のある日の勉強時間を表したものです。
+${tbl(['勉強時間','度数(人)'],[['0分以上30分未満','5'],['30分 ～ 1時間','x'],['1時間 ～ 1時間30分','15'],['1時間30分 ～ 2時間','y'],['2時間 ～ 2時間30分','4'],['2時間30分 ～ 3時間','2'],['計','40']])}
+<b>(1)</b> 勉強時間が2時間未満の生徒は、全体の何％ですか。`,
+ans:[{v:85,unit:'％'}],hint:'2時間以上の生徒は 4＋2＝6人。2時間未満は 40－6 人です。',sol:'40 － 6 ＝ 34人　　34 ÷ 40 ＝ 0.85　→ <b>85％</b>'}})}
+${reg({p:{q:`<b>(2)</b> 30分以上1時間未満の階級の相対度数が0.2のとき、<b>x、y</b>の値を求めましょう。`,
+ans:[{pre:'x＝',v:8},{pre:'y＝',v:6}],hint:'x は 40 × 0.2。y は、合計40から他の度数をひきます。',sol:'x ＝ 40 × 0.2 ＝ <b>8</b><br>y ＝ 40 － (5＋8＋15＋4＋2) ＝ <b>6</b>'}})}</div>`});
+
+/* 2 平均値 */
+S.push({name:'② 平均値',html:()=>`
+<h2>2. 平均値を求める</h2>
+<div class="point"><b class="t">ポイント</b><br><b>平均値 ＝ ${frac('データの合計','データの個数')}</b></div>
+<div class="card"><span class="tag ex">例題</span>男子10人の1分間のうでたてふせの回数です。平均値を求めましょう。
+<div class="chips" id="meanChips"></div>
+<button class="b" onclick="meanStep()" id="meanBtn">合計を求める</button>
+<div id="meanOut" style="margin-top:6px"></div></div>
+<div class="card">${reg({tag:['ミニテスト','mini'],p:{q:'5人の漢字テストの点数は 6，8，7，9，5 点でした。平均値を求めましょう。',ans:[{v:7,unit:'点'}],hint:'合計 35 を 5 でわります。',sol:'(6＋8＋7＋9＋5)÷5 ＝ 35÷5 ＝ <b>7点</b>'}})}</div>
+
+<h2>3. 度数分布表から平均値を求める</h2>
+<div class="point"><b class="t">重要</b><br><b>階級値</b> …… 階級の真ん中の値（階級の平均）。例：40以上50未満 → 45<br>
+<b>平均値 ＝ ${frac('(階級値 × 度数) の合計','度数の合計')}</b></div>
+<div class="card"><span class="tag ex">例題</span>あるクラスの男子20人の体重の表です。順番にボタンを押してください。
+<div id="clsDemo"></div>
+<button class="b" onclick="clsStep()" id="clsBtn">① 階級値を出す</button><button class="b sub" onclick="clsReset()">最初から</button>
+<div id="clsOut"></div></div>
+<h3>練習</h3>
+<div class="card">${reg({tag:['練習'],p:{q:`サッカー部20人の身長の表です。
+${tbl(['階級(cm)','階級値','度数(人)'],[['150以上160未満','','3'],['160 ～ 170','','4'],['170 ～ 180','','11'],['180 ～ 190','','2'],['計','','20']])}
+<b>(1)</b> 階級値を上から順に求めましょう。`,ans:[{v:155},{v:165},{v:175},{v:185}],hint:'150と160の真ん中は 155 です。',sol:'上から <b>155，165，175，185</b>'}})}
+${reg({p:{q:'<b>(2)</b> 身長の平均値を求めましょう。',ans:[{v:171,unit:'cm'}],hint:'(155×3＋165×4＋175×11＋185×2)÷20',sol:'(155×3＋165×4＋175×11＋185×2)÷20 ＝ 3420÷20 ＝ <b>171cm</b>'}})}</div>`});
+
+/* 3 中央値 */
+S.push({name:'③ 中央値',html:()=>`
+<h2>4. 中央値（メジアン）</h2>
+<div class="point"><b class="t">ポイント</b><br><b>中央値</b> …… データを<b>小さい順に並べたとき、真ん中の値</b>。<br>
+・個数が<b>奇数</b>のとき → ちょうど真ん中の1個<br>
+・個数が<b>偶数</b>のとき → 真ん中の<b>2個の平均</b><br>
+⚠ 並べかえてから数えること！</div>
+<div class="card"><span class="tag ex">例題</span>データを並べかえて、中央値の位置を見てみましょう。
+<div>
+<button class="b sub" onclick="medSet(0)">(1) 9個のデータ</button><button class="b sub" onclick="medSet(1)">(2) 12個のデータ</button><button class="b sub" onclick="medSet(2)">(3) ばらばらの10個</button></div>
+<div class="chips" id="medChips"></div>
+<button class="b" onclick="medSort()">① 小さい順に並べる</button><button class="b" onclick="medMid()">② 真ん中に印をつける</button>
+<div id="medOut" style="margin-top:6px"></div></div>
+<div class="card">${reg({tag:['ミニテスト','mini'],p:{q:'次のデータの中央値は？　2，9，4，7，5',ans:[{v:5}],hint:'まず小さい順：2，4，5，7，9',sol:'小さい順に 2，4，<b>5</b>，7，9 → 中央値は <b>5</b>'}})}</div>
+<h3>練習</h3>
+<div class="card">${reg({tag:['練習1'],p:{q:'次のデータの中央値を求めましょう。<br>(1)　7　8　9　12　14　16　18',ans:[{v:12}],hint:'7個なので4番目です。',sol:'4番目の <b>12</b>'}})}
+${reg({p:{q:'(2)　12　13　14　16　18　19　20　22',ans:[{v:17}],hint:'8個なので、4番目と5番目の平均です。',sol:'(16＋18)÷2 ＝ <b>17</b>'}})}</div>
+<div class="card">${reg({tag:['練習2'],p:{q:'9個のデータがあります。中央値を求めましょう。<br>7，8，6，4，4，8，4，6，5',ans:[{v:6}],hint:'まず小さい順に並べます。',sol:'4，4，4，5，<b>6</b>，6，7，8，8 → 中央値は <b>6</b>'}})}
+${reg({p:{q:'10個のデータがあります。中央値を求めましょう。<br>5，3，6，2，4，1，3，3，5，4',ans:[{v:3.5}],hint:'小さい順に並べ、5番目と6番目の平均です。',sol:'1，2，3，3，<b>3</b>，<b>4</b>，4，5，5，6 → (3＋4)÷2 ＝ <b>3.5</b>'}})}</div>
+<div class="card"><b>もっと練習したい人へ</b>（毎回ちがう問題が出ます）
+<div id="rndQ"></div><button class="b sub" onclick="rnd()">新しい問題</button></div>`,init:()=>{medSet(0);rnd()}});
+
+/* 4 最頻値 */
+S.push({name:'④ 最頻値',html:()=>`
+<h2>5. 最頻値（モード）</h2>
+<div class="point"><b class="t">ポイント</b><br><b>最頻値</b> …… データの中で<b>いちばん個数（度数）が多い値</b>。<br>
+度数分布表のときは、度数が最も多い<b>階級の階級値</b>が最頻値です。</div>
+<div class="card"><span class="tag ex">例題</span>(1) 男子20人の体重の度数分布表。ボタンで最頻値を探します。
+<div id="modeBars"></div><button class="b" onclick="modeShow()">いちばん高い棒をさがす</button><div id="modeOut"></div>
+<hr>(2) 次の12個のデータの最頻値は？<br>1，2，7，2，3，6，8，11，12，12，15，12
+<div><button class="b sub" onclick="$('#m2').classList.toggle('show')">答えを見る</button></div>
+<div class="sol" id="m2">12が3個で最多 → 最頻値は <b>12</b></div></div>
+<div class="card">${reg({tag:['ミニテスト','mini'],p:{q:'3，5，5，7，5，8，7 の最頻値は？',ans:[{v:5}],hint:'いちばん多く出てくる数を探します。',sol:'5が3個で最多 → <b>5</b>'}})}</div>
+<h3>練習</h3>
+<div class="card">${reg({tag:['練習(1)'],p:{q:`あるクラスの男子の胸囲の度数分布表です。最頻値を求めましょう。
+${tbl(['階級(cm)','階級値','度数(人)'],[['65以上75未満','70','4'],['75 ～ 85','80','12'],['85 ～ 95','90','5'],['計','','21']])}`,ans:[{v:80,unit:'cm'}],hint:'度数がいちばん多い階級の、階級値です。',sol:'度数12が最多 → 階級値の <b>80cm</b>'}})}
+${reg({tag:['練習(2)'],p:{q:'あるテストの得点です。最頻値を求めましょう。<br>① 9，5，7，6，5，9，7，8，5',ans:[{v:5}],sol:'5が3個で最多 → <b>5</b>'}})}
+${reg({p:{q:'② 4，7，4，5，6，8，6，7，8，6',ans:[{v:6}],sol:'6が3個で最多 → <b>6</b>'}})}</div>`,init:()=>modeInit()});
+
+/* 5 確認テスト */
+S.push({name:'⑤ 確認テスト',html:()=>`
+<h2>確認テスト（高校入試問題）</h2>
+<p>制限時間の目安：20分。ヒントや解説は、まず自分で解いてから見ましょう。</p>
+<div class="card">${reg({tag:['(1)','test'],p:{q:`5人の生徒のお小遣いです。平均値を求めましょう。＜慶誠高校＞
+${hrow(['生徒',"お小遣い(円)"],[['A','B','C','D','E'],['1000','800','500','2000','1200']])}`,ans:[{v:1100,unit:'円'}],hint:'合計 5500 ÷ 5',sol:'(1000＋800＋500＋2000＋1200)÷5 ＝ 5500÷5 ＝ <b>1100円</b>'}})}</div>
+<div class="card">${reg({tag:['(2)','test'],p:{q:'数学のテストの点数です。平均値を求めましょう。＜国府高校＞<br>23，7，36，32，19，46，6，5，9，12（点）',ans:[{v:19.5,unit:'点'}],hint:'10個のデータの合計は 195 です。',sol:'(23＋7＋36＋32＋19＋46＋6＋5＋9＋12)÷10 ＝ 195÷10 ＝ <b>19.5点</b>'}})}</div>
+<div class="card">${reg({tag:['(3)','test'],p:{q:`クラスの生徒20人の懸垂の記録です。平均値を求めましょう。
+${hrow(['回数(回)','人数(人)'],[['0','1','2','3','4','5','6','計'],['1','3','1','6','4','3','2','20']])}`,ans:[{v:3.3,unit:'回'}],hint:'(回数×人数)の合計 ÷ 20',sol:'(0×1＋1×3＋2×1＋3×6＋4×4＋5×3＋6×2)÷20 ＝ 66÷20 ＝ <b>3.3回</b>'}})}</div>
+<div class="card">${reg({tag:['(4)','test'],p:{q:`A市のある年の8月の最高気温の記録（小数点以下を四捨五入）です。最高気温の中央値を求めましょう。＜慶誠高校＞
+${hrow(['気温(℃)','日数(日)'],[['31','32','33','34','35','36','計'],['3','6','7','8','4','3','31']])}`,ans:[{v:33,unit:'℃'}],hint:'31日分なので、小さい順の何番目が中央値でしょう？ 31日 → 16番目です。',sol:'中央値は16番目。31℃…3日、32℃…6日（ここまで9日）、33℃…7日（ここまで16日）<br>→ 16番目は 33℃ の階級。<b>33℃</b>'}})}</div>
+<div class="card">${reg({tag:['(5)','test'],p:{q:`あるクラスの身長の平均は155cmです。下の表は、そのうちの5人の身長と、クラスの平均との差です。この5人の身長の平均を求めましょう。＜慶誠高校＞
+${hrow(['生徒','平均との差(cm)'],[['A','B','C','D','E'],['＋8','－7','＋3','＋11','－5']])}`,ans:[{v:157,unit:'cm'}],hint:'平均との差の平均を出して、155にたします。',sol:'差の合計 ＝ 8－7＋3＋11－5 ＝ 10　10÷5 ＝ 2<br>155 ＋ 2 ＝ <b>157cm</b>'}})}</div>
+<div class="card">${reg({tag:['(6)','test'],p:{q:`中学3年生男子10人の反復横とびの回数です。<b>1つ</b>の記録 □ が分かりません。中央値が57のとき、□にあてはまる回数を求めましょう。＜国府高校＞
+<div class="chips"><span class="chip">63</span><span class="chip">52</span><span class="chip">61</span><span class="chip">56</span><span class="chip">42</span><span class="chip">65</span><span class="chip" style="background:#fff3cd">□</span><span class="chip">61</span><span class="chip">55</span><span class="chip">43</span></div>`,ans:[{v:58}],hint:'□以外の9個を小さい順に並べると 42，43，52，55，56，61，61，63，65。10個の中央値は5番目と6番目の平均です。',sol:'□以外を小さい順に：42，43，52，55，56，61，61，63，65<br>中央値57は、5番目の56と6番目の□の平均です。<br>(56＋□)÷2 ＝ 57　→　56＋□ ＝ 114　→　□ ＝ <b>58</b>'}})}</div>
+<div class="card">${reg({tag:['(7)','test'],p:{q:`あるクラス20人の1日の学習時間の表です。このクラスの平均学習時間は1.6時間です。<b>x、y</b>の値を求めましょう。＜九州学院高校＞
+${tbl(['学習時間(時間)','度数(人)'],[['0以上1未満','6'],['1 ～ 2','x'],['2 ～ 3','3'],['3 ～ 4','y'],['4 ～ 5','1'],['計','20']])}`,ans:[{pre:'x＝',v:9},{pre:'y＝',v:1}],hint:'①度数の合計から x＋y＝10。②平均＝(階級値×度数の合計)÷20＝1.6 から、階級値(0.5，1.5，2.5，3.5，4.5)を使って式を作ります。',sol:'① 6＋x＋3＋y＋1＝20 より x＋y＝10<br>② (0.5×6＋1.5x＋2.5×3＋3.5y＋4.5×1)÷20 ＝ 1.6<br>　3＋1.5x＋7.5＋3.5y＋4.5 ＝ 32 → 1.5x＋3.5y ＝ 17<br>①のx＝10－y を代入：15－1.5y＋3.5y＝17 → y＝1、x＝9<br><b>x＝9，y＝1</b>'}})}</div>
+<div class="score" id="score">得点：0 / 0</div>`});
+
+/* ---------- ナビ・描画 ---------- */
+let cur=0;
+function upd(){let t=0,o=0;Object.values(store).forEach(p=>{t++;if(p.ok)o++});
+  const sc=$('#score');if(sc){const ids=[...document.querySelectorAll('section.on .q')].map(e=>e.id).filter(k=>!store[k].rand);let tt=0,oo=0;ids.forEach(i=>{tt++;if(store[i].ok)oo++});sc.textContent=`この単元の正解：${oo} / ${tt}`}
+  S.forEach((s,i)=>{const sec=$('#sec'+i);const ids=[...sec.querySelectorAll('.q')].map(e=>e.id).filter(k=>!store[k].rand);if(ids.length&&ids.every(k=>store[k].ok))$('#nav').children[i].classList.add('done')})}
+function go(i){cur=i;[...$('#nav').children].forEach((b,j)=>b.classList.toggle('on',j==i));S.forEach((_,j)=>$('#sec'+j).classList.toggle('on',j==i));scrollTo(0,0);upd()}
+S.forEach((s,i)=>{const b=document.createElement('button');b.textContent=s.name;b.onclick=()=>go(i);$('#nav').appendChild(b)});
+$('#main').innerHTML=S.map((s,i)=>`<section id="sec${i}">${s.html()}<div class="next">${i<S.length-1?`<button class="b" onclick="go(${i+1})">次へ：${S[i+1].name} ▶</button>`:'おつかれさまでした！'}</div></section>`).join('');
+
+/* ---------- デモ：相対度数 ---------- */
+const relData=[['0分以上20分未満',5],['20 ～ 40',16],['40 ～ 60',11],['60 ～ 80',6],['80 ～ 100',2]];let relN=0;
+function relDraw(){$('#relDemo').innerHTML=`<table><tr><th>階級</th><th>度数(人)</th><th>相対度数</th></tr>${relData.map((r,i)=>`<tr><td>${r[0]}</td><td>${r[1]}</td><td class="${i==relN-1?'new':''}">${i<relN?`${r[1]}÷40 ＝ <b>${(r[1]/40).toFixed(3).replace(/0+$/,'').replace(/\.$/,'.0')}</b>`:'？'}</td></tr>`).join('')}<tr><th>計</th><th>40</th><th>${relN==5?'<b>1.000</b>（合計は1になる！）':'？'}</th></tr></table>`;$('#relBtn').disabled=relN>=5}
+function relStep(){if(relN<5)relN++;relDraw()}function relReset(){relN=0;relDraw()}relDraw();
+
+/* ---------- デモ：平均 ---------- */
+const mv=[21,29,31,24,23,27,20,25,28,17];let mS=0;
+$('#meanChips').innerHTML=mv.map(v=>`<span class="chip">${v}</span>`).join('');
+function meanStep(){const o=$('#meanOut'),b=$('#meanBtn');
+ if(mS==0){o.innerHTML='合計 ＝ '+mv.join('＋')+' ＝ <b>245</b>';b.textContent='個数でわる';mS=1}
+ else if(mS==1){o.innerHTML+='<br>個数は10個 → 平均値 ＝ 245 ÷ 10 ＝ <b style="color:var(--ok)">24.5回</b>';b.disabled=true;mS=2}}
+
+/* ---------- デモ：度数分布表の平均 ---------- */
+const cd=[['40以上50未満',45,1],['50 ～ 60',55,6],['60 ～ 70',65,8],['70 ～ 80',75,3],['80 ～ 90',85,1],['90 ～ 100',95,1]];let cS=0;
+function clsDraw(){$('#clsDemo').innerHTML=`<table><tr><th>階級(kg)</th><th>階級値</th><th>度数(人)</th><th>階級値×度数</th></tr>${cd.map(r=>`<tr><td>${r[0]}</td><td>${cS>=1?r[1]:'？'}</td><td>${r[2]}</td><td>${cS>=2?r[1]*r[2]:'？'}</td></tr>`).join('')}<tr><th>計</th><th></th><th>20</th><th>${cS>=3?'1300':'？'}</th></tr></table>`}
+function clsStep(){const b=$('#clsBtn'),o=$('#clsOut');cS++;clsDraw();
+ if(cS==1)b.textContent='② 階級値×度数を出す';
+ if(cS==2)b.textContent='③ 合計を出す';
+ if(cS==3){b.textContent='④ 度数の合計でわる'}
+ if(cS==4){o.innerHTML='平均値 ＝ 1300 ÷ 20 ＝ <b style="color:var(--ok)">65kg</b>';b.disabled=true}}
+function clsReset(){cS=0;$('#clsBtn').disabled=false;$('#clsBtn').textContent='① 階級値を出す';$('#clsOut').innerHTML='';clsDraw()}clsDraw();
+
+/* ---------- デモ：中央値 ---------- */
+const medSets=[[3,4,4,5,7,8,9,9,10],[3,3,4,4,5,5,6,7,8,9,10,11],[9,4,10,2,7,3,8,5,6,1]];let mi=0,mState=0,mArr=[];
+function medSet(i){mi=i;mState=0;mArr=medSets[i].slice();if(i==0||i==1){/* ばらして表示 */mArr=shuf(medSets[i])}medDraw();$('#medOut').innerHTML=''}
+function shuf(a){a=a.slice();for(let i=a.length-1;i>0;i--){const j=(i*7+3)%(i+1);[a[i],a[j]]=[a[j],a[i]]}return a}
+function medDraw(mid=[]){$('#medChips').innerHTML=mArr.map((v,i)=>`<span class="chip ${mid.includes(i)?'mid':''}">${v}</span>`).join('')}
+function medSort(){mArr.sort((a,b)=>a-b);mState=1;medDraw();$('#medOut').innerHTML='小さい順に並べました。'+mArr.length+'個です。'}
+function medMid(){if(mState<1){$('#medOut').innerHTML='⚠ 先に小さい順に並べましょう！';return}
+ const n=mArr.length;if(n%2){const k=(n-1)/2;medDraw([k]);$('#medOut').innerHTML=`${n}個（奇数）→ ${k+1}番目が中央値 → <b style="color:var(--ok)">${mArr[k]}</b>`}
+ else{const k=n/2;medDraw([k-1,k]);const m=(mArr[k-1]+mArr[k])/2;$('#medOut').innerHTML=`${n}個（偶数）→ ${k}番目と${k+1}番目の平均<br>(${mArr[k-1]}＋${mArr[k]})÷2 ＝ <b style="color:var(--ok)">${m}</b>`}}
+
+/* ランダム練習 */
+let rq=null;
+function rnd(){const n=5+Math.floor(Math.random()*6);const a=[];for(let i=0;i<n;i++)a.push(1+Math.floor(Math.random()*15));
+ const s=a.slice().sort((x,y)=>x-y);const m=n%2?s[(n-1)/2]:(s[n/2-1]+s[n/2])/2;
+ const id='rq'+(++uid);store[id]={ans:[{v:m}],sol:''};store[id].rand=true;
+ $('#rndQ').innerHTML=`<div class="q" id="${id}">次のデータの中央値は？（${n}個）<br><b>${a.join('，')}</b><div style="margin-top:6px"><input class="ans" id="${id}_0" inputmode="decimal" autocomplete="off"> <button class="b" onclick="chk('${id}')">答え合わせ</button><button class="b sub" onclick="tg('${id}','s')">解説</button><span class="fb" id="${id}_fb"></span></div><div class="sol" id="${id}_s">小さい順：${s.join('，')}<br>${n%2?`${(n+1)/2}番目 → <b>${m}</b>`:`${n/2}番目と${n/2+1}番目の平均 → (${s[n/2-1]}＋${s[n/2]})÷2 ＝ <b>${m}</b>`}</div></div>`}
+
+/* ---------- デモ：最頻値 ---------- */
+function modeInit(){const f=[1,6,8,3,1,1];$('#modeBars').innerHTML=`<div class="bars">${f.map((v,i)=>`<div class="bar" id="mb${i}" style="height:${v*16}px"><span>${v}</span></div>`).join('')}</div><div class="lab">${cd.map(r=>`<div>${r[0].replace('以上','').replace('未満','')}<br>(${r[1]})</div>`).join('')}</div>`}
+function modeShow(){$('#mb2').classList.add('top');$('#modeOut').innerHTML='いちばん高い（度数8人）の階級は 60～70kg。その階級値 → 最頻値は <b style="color:var(--ok)">65kg</b>'}
+S.forEach(s=>s.init&&s.init());go(0);
+</script>
+</body>
+</html>
